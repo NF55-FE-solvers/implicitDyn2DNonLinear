@@ -34,8 +34,8 @@ public:
 
     void setBcInit(ndofVectf& disp, ndofVectf& force) const;
     
-    void setBcTimeDependent(ndofVectf& dispNewOrForce, const ndofVecti& mapDof
-        , const Settings::precision time, const int mapDofBlockSize);
+    void setBcTimeDependent(ndofVectf& dispNewOrForce
+        , const Settings::precision time);
 };
 
 #endif

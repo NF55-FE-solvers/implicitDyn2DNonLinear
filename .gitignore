@@ -1,0 +1,12 @@
+# folders
+EigenLib/
+build/
+.vscode
+
+# file types
+*.vtk
+MESH/*.dat
+MESH/*.inp
+!MESH/SETS/*.dat
+
+static2dynamic/nodalDispVect

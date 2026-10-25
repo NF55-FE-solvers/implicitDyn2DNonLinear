@@ -27,10 +27,14 @@ namespace Settings{
     constexpr const precision dtSaveVTK {tFinal/timeInst2save};
     constexpr const precision gamma {0.5}; // const. of Newmark-beta method
     constexpr const precision beta {0.25}; // const. of Newmark-beta method
+
+    // for Newton-Raphson iterations
+    constexpr const precision residualTargetTol {5e-3};
+    constexpr const int maxNewtonIters {5};
     
     // for results and other things
     // the vtk ascii option was left unused after seeing the performance diff.
-    inline fPath expectedRootProj {"implicitDyn2DLinear"};
+    inline fPath expectedRootProj {"implicitDyn2DNonLinear"};
     inline fPath resultsDirName {"./VTK RESULTS"};
     inline fPath dispFromStaticPath {"./static2dynamic/nodalDispVect"};
 
