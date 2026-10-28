@@ -13,10 +13,13 @@
 class Bc
 {
 private:
+    using sizT = std::size_t;
     using ndofVectf = Eigen::Vector<Settings::precision,Eigen::Dynamic>;
     using ndofVecti = Eigen::Vector<int, Eigen::Dynamic>;
+    using sparseMat = Eigen::SparseMatrix<Settings::precision>;
+    using eigenIterator=Eigen::SparseMatrix<Settings::precision>::InnerIterator;
 
-    enum BCnames : std::size_t{
+    enum BCnames : sizT{
         BCx,
         BCy,
         Fx,
@@ -35,7 +38,10 @@ public:
     void setBcInit(ndofVectf& disp, ndofVectf& force) const;
     
     void setBcTimeDependent(ndofVectf& dispNewOrForce
-        , const Settings::precision time);
+        , const Settings::precision time) const;
+    
+    void embedBCintoKt(sparseMat& ktEff) const;
+    void embedBCintoResidual(ndofVectf& residual) const;
 };
 
 #endif

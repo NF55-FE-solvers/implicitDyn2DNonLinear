@@ -62,9 +62,8 @@ int main(){
                     }
                 }
                 if (e > numEl2Message){
-                    std::cout << "Sparse global mass & stiffness matrix " 
-                        << "computation... " << numEl2Message/numEl1perc
-                        *5.0f << "%\n";
+                    std::cout << "Sparse global mass matrix computation... "
+                        << numEl2Message/numEl1perc*5.0f << "%\n";
                     numEl2Message += numEl1perc;
                 }
             }
@@ -78,7 +77,7 @@ int main(){
 
         ndofVectf force, dispOld, dispNew, velOld, velNew, accOld, accNew;
         
-        Ic::setIC(dispOld, velOld, accOld, force, mG);
+        Ic::setIC(dispOld, velOld, accOld, force, mG, mesh);
         bc.setBcInit(dispOld, force);
         dispNew = dispOld;
         velNew  = velOld;
@@ -96,10 +95,11 @@ int main(){
         constexpr const Settings::precision coeffM {1.0/(Settings::beta*dt2)};
         constexpr const Settings::precision coeffAcc {0.5-Settings::beta};
 
-        ndofVectf forceInt;
+        ndofVectf forceInt = ndofVectf::Zero(mesh.nDof);
         ndofVectf residual;
         Eigen::SparseMatrix<Settings::precision> ktInt (mesh.nDof, mesh.nDof);
         Eigen::SparseMatrix<Settings::precision> ktEff (mesh.nDof, mesh.nDof);
+        Settings::solverType solver;
 
         while (time < (Settings::tFinal + Settings::dt/2.0))
         {
@@ -116,6 +116,7 @@ int main(){
             
             residual.noalias() = mG*accNew;
             residual.noalias() += (forceInt - force);
+            bc.embedBCintoResidual(residual);
             
             normR = residual.cwiseAbs().maxCoeff()/force.cwiseAbs().maxCoeff();
             
@@ -127,7 +128,6 @@ int main(){
                     std::cout << "Time instant " << time << " / " 
                         << Settings::tFinal << " s saved!\n";
                 }
-
                 std::swap(dispOld, dispNew);
                 std::swap(velOld, velNew);
                 std::swap(accOld, accNew);
@@ -139,9 +139,22 @@ int main(){
             
             ktEff = coeffM * mG + ktInt;
 
+            // as sparsity pattern of the ktEff matrix is fixed (assumption):
+            if ((time < (Settings::t0 + 1.5*Settings::dt)) 
+                && (newtonRaphsonCounter == 0))
+            {
+                solver.analyzePattern(ktEff);
+                if(solver.info() != Eigen::Success) throw "Sparsity pattern analysis failed - linear solver.";
+            }// evaluated only at the start of simulation-----------------------
+
+            bc.embedBCintoKt(ktEff);
             
-            // modify KtEff as well as residual to avoid using partitioning
-            // solve for dispNew
+            solver.factorize(ktEff);
+            if(solver.info()!=Eigen::Success) throw "Factorization failed - linear solver.";
+
+            dispNew.noalias() -= solver.solve(residual);
+            if (solver.info()!=Eigen::Success) throw "Linear solver failed.";
+
             if (++newtonRaphsonCounter > Settings::maxNewtonIters){
                 throw "Maximum number of Newton-Raphson iterations reached!";
             }

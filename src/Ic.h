@@ -7,6 +7,7 @@
 #include <string>
 #include "Eigen/Eigen"
 #include "settings.h"
+#include "Mesh.h"
 
 namespace Ic{
     using ndofVectf = Eigen::Vector<Settings::precision, Eigen::Dynamic>;
@@ -18,7 +19,7 @@ namespace Ic{
     constexpr void usedPrecision(float val, std::string& str){ str="float"s; }
 
     void setIC(ndofVectf& dispOld, ndofVectf& velOld, ndofVectf& accOld
-        , ndofVectf& force, sparseMat& mG)
+        , ndofVectf& force, sparseMat& mG, Mesh& mesh)
     {
         std::cout << "\nEmbedding initial conditions @t=" << Settings::t0 
             << "s ...\n\n";
@@ -55,10 +56,11 @@ namespace Ic{
             //     throw "Linear solver failed solving(1).";
             // }
         }else{
-            dispOld = ndofVectf::Zero(dispOld.size());
-            velOld = ndofVectf::Zero(dispOld.size());
-            accOld = ndofVectf::Zero(dispOld.size());
-            force = ndofVectf::Zero(dispOld.size());
+            int nDofMesh {mesh.nDof};
+            dispOld = ndofVectf::Zero(nDofMesh);
+            velOld = ndofVectf::Zero(nDofMesh);
+            accOld = ndofVectf::Zero(nDofMesh);
+            force = ndofVectf::Zero(nDofMesh);
         }
             
     }

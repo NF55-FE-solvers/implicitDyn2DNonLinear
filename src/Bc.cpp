@@ -1,6 +1,6 @@
 #include "Bc.h"
 
-void Bc::setBcInit(Bc::ndofVectf& disp, Bc::ndofVectf& force) const
+void Bc::setBcInit(ndofVectf& disp, ndofVectf& force) const
 {
     std::cout << "\nEmbedding boundary conditions @t=" << Settings::t0 
         << "s ...\n";
@@ -20,20 +20,66 @@ void Bc::setBcInit(Bc::ndofVectf& disp, Bc::ndofVectf& force) const
     // same can be done for any other bc...
 }
 
-void Bc::setBcTimeDependent(Bc::ndofVectf& dispNewOrForce
-    , const Settings::precision time)
+void Bc::setBcTimeDependent(ndofVectf& dispNewOrForce
+    , const Settings::precision time) const
 {
+    // use a bc or alternatively create one only for the time dependent bcs
+    const auto chosenBc {Fy};
+
     // creation of custom amplitude
     constexpr const Settings::precision amp {-300.0};
     Settings::precision dispOrFcurrent 
         {amp*time/(Settings::tFinal-Settings::t0)};
-    
-    // use a bc or alternatively create one only for the time dependent bcs
-    const auto chosenBc {Fy};
 
     if (bcs[chosenBc].empty()) throw "The time dependent boundary condition selected is empty - Bc.cpp";
 
     dispNewOrForce(bcs[chosenBc]).setConstant(dispOrFcurrent);
+}
+
+void Bc::embedBCintoKt(sparseMat& ktEff) const
+{
+    std::vector<bool> isDofBC (ktEff.rows(), false);
+
+    for (const auto dof : bcs[BCx]){
+        ktEff.coeffRef(dof, dof) = 1.0;
+        isDofBC[dof] = true;
+    }
+    for (const auto dof : bcs[BCy]){
+        ktEff.coeffRef(dof, dof) = 1.0;
+        isDofBC[dof] = true;
+    }
+
+    // clearing rows (and columns to keep symmetry or improve factorization)
+    int row {};
+    for (int col=0; col<ktEff.rows(); ++col){
+        for (eigenIterator it(ktEff,col); it; ++it){
+            row = it.row();
+
+            if (row == col) continue;
+
+            if (isDofBC[col] || isDofBC[row]) it.valueRef() = 0.0;
+
+            // following lines commented out, assuming no time-dependent BC disp
+            // residual(it.row()) -= it.value()*incrementDisp(dofBC);
+
+        }
+    }
+}
+
+void Bc::embedBCintoResidual(ndofVectf& residual) const{
+    // Assuming for now, no time-dependent BC applied to disp. vector, this 
+    // leads to optimization: no need to subtract from residual vector the 
+    // product between the ktEff element and the known displacement increment. 
+    // As the latter would be 0. 
+    // We set the constrained dof of residual to 0.0
+    
+    // make sure to include all constrained dof (for displacements)
+    for (const auto dof : bcs[BCx]){
+        residual(dof) = 0.0;
+    }
+    for (const auto dof : bcs[BCy]){
+        residual(dof) = 0.0;
+    }
 }
 
 void Bc::extractBCAbaqus(){

@@ -35,6 +35,7 @@ namespace FintKtInt{
         Eigen::Matrix<int,Settings::dofNode,Settings::nNodesEl> 
             dofEliMat;
         int elMatContiguousIndx {};
+        fInt.setZero();
 
         for (SizT e=0uz; e<static_cast<SizT>(mesh.nElements); ++e){
             ktMat.setZero();
@@ -103,12 +104,12 @@ namespace FintKtInt{
                     pk2DotStar = Material::C * eDotStar;
                     pDotStar.row(0) = pk2DotStar.row(0)*fTensor(0,0) 
                         + pk2DotStar.row(2)*fTensor(0,1);
-                    pDotStar.row(1) = pk2DotStar.row(1)*fTensor(0,0)
-                        + pk2DotStar.row(3)*fTensor(0,1);
+                    pDotStar.row(1) = pk2DotStar.row(2)*fTensor(0,0)
+                        + pk2DotStar.row(1)*fTensor(0,1);
                     pDotStar.row(2) = pk2DotStar.row(0)*fTensor(1,0)
                         + pk2DotStar.row(2)*fTensor(1,1);
-                    pDotStar.row(3) = pk2DotStar.row(1)*fTensor(1,0)
-                        + pk2DotStar.row(3)*fTensor(1,1);
+                    pDotStar.row(3) = pk2DotStar.row(2)*fTensor(1,0)
+                        + pk2DotStar.row(1)*fTensor(1,1);
                     ktMat.noalias() += scalar4GaussInt * b0mat.transpose() 
                         * pDotStar;
                     // computing geometric tangent stiffness matrix

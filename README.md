@@ -21,5 +21,3 @@ solver. If not, you can still use the (slower) Eigen built-in linear solvers.
 - Build (CMake) the program.
 - execute the program (in ./build/ folder) from the root folder.
 - the set of .vtk files containing the results will be saved in "./VTK RESULTS" folder.
-
-[To set the IC from a static solution activate the corresponding option in settings.h, same should be done in the static solver before simulation. A binary file will be generated in ./static2dynamic after static simulation, copy this file and paste it in the same folder of the dynamic solver.]
